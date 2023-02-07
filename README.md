@@ -15,19 +15,19 @@ go get github.com/demoulin/countrycontinent@v1.3.0
 ### Get countries from continent name
 
 ``` go
-func ContinentGetCountry(ct string) []string
+func ContinentGetCountry(continent string) []string
 ```
 
 ### Get continent name from Country code
 
 ``` go
-func CountryGetContinent(cc string) string
+func CountryGetContinent(countryCode string) string
 ```
 
 ### Get Country full name from Country code
 
 ``` go
-func CountryGetFullName(cc string) string
+func CountryGetFullName(countryCode string) string
 ```
 
 ## Example

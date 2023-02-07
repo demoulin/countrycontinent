@@ -245,33 +245,34 @@ var countryContinent = []CountryContinent{
 	{"ZW", "Zimbabwe", "Africa"},
 }
 
-// CountryGetFullName returns the full name of a country from its country code (case sensitive)
-func CountryGetFullName(cc string) string {
-	for _, v := range countryContinent {
-		if v.CountryCode == cc {
-			return v.CountryName
+// CountryGetFullName returns the full name of the country with the given country code.
+// This function will return an empty string if the country code is not found.
+func CountryGetFullName(countryCode string) string {
+	for _, country := range countryContinent {
+		if country.CountryCode == countryCode {
+			return country.CountryName
 		}
 	}
 	return ""
 }
 
 // CountryGetContinent returns the continent of a country from its country code (case sensitive)
-func CountryGetContinent(cc string) string {
-	for _, v := range countryContinent {
-		if v.CountryCode == cc {
-			return v.Continent
+// This function will return an empty string if the country code is not found.
+func CountryGetContinent(countryCode string) string {
+	for _, countryContinent := range countryContinent {
+		if countryContinent.CountryCode == countryCode {
+			return countryContinent.Continent
 		}
 	}
 	return ""
 }
 
-// ContinentGetCountries returns a list of countries in a continentfrom its continent name (case sensitive)
-
-func ContinentGetCountries(ct string) (cc []string) {
+// ContinentGetCountries returns a list of countries in a continent from its continent name (case sensitive)
+func ContinentGetCountries(continent string) (countries []string) {
 	for _, v := range countryContinent {
-		if v.Continent == ct {
-			cc = append(cc, v.CountryCode)
+		if v.Continent == continent {
+			countries = append(countries, v.CountryCode)
 		}
 	}
-	return cc
+	return countries
 }

@@ -4,7 +4,9 @@ import (
 	"testing"
 )
 
+// TestCountryGetFullName tests the CountryGetFullName function.
 func TestCountryGetFullName(t *testing.T) {
+	// Test cases are represented as a map of country codes to full names.
 	for country, fullname := range map[string]string{
 		"NL": "Netherlands",
 		"US": "United States",
@@ -15,13 +17,16 @@ func TestCountryGetFullName(t *testing.T) {
 		"JP": "Japan",
 		"XX": "",
 	} {
+		// The test function checks that the country code returns the expected full name.
 		if CountryGetFullName(country) != fullname {
+			// If the expected and actual values are different, the test fails.
 			t.Errorf("CountryGetFullName(%s) = %s; want %s", country, CountryGetFullName(country), fullname)
 		}
 	}
 }
 
 func TestCountryGetContinent(t *testing.T) {
+	// test cases
 	for country, continent := range map[string]string{
 		"NL": "Europe",
 		"US": "North America",
@@ -32,8 +37,14 @@ func TestCountryGetContinent(t *testing.T) {
 		"JP": "Asia",
 		"XX": "",
 	} {
-		if CountryGetContinent(country) != continent {
-			t.Errorf("CountryGetContinent(%s) = %s; want %s", country, CountryGetContinent(country), continent)
+		// expected result
+		want := continent
+		// actual result
+		got := CountryGetContinent(country)
+		// compare expected and actual result
+		if got != want {
+			// report error
+			t.Errorf("CountryGetContinent(%s) = %s; want %s", country, got, want)
 		}
 	}
 }
@@ -51,6 +62,7 @@ func TestContinentGetCountries(t *testing.T) {
 	t.Logf("Antarctica %d: %s", len(ContinentGetCountries("Antarctica")), ContinentGetCountries("Antarctica"))
 	t.Logf("XX %d: %s", len(ContinentGetCountries("XX")), ContinentGetCountries("XX"))
 
+	// We want to test if the countries are in the right continent
 	for continent, countries := range map[string][]string{
 		"Europe":        {"NL", "DE", "FR", "ES", "IT", "GB"},
 		"North America": {"US", "MX"},
@@ -68,11 +80,15 @@ func TestContinentGetCountries(t *testing.T) {
 	}
 }
 
+// StringInSlice checks if a string is present in a slice of strings
 func StringInSlice(country string, s []string) bool {
+	// Iterate through the slice
 	for _, v := range s {
+		// Check if the country is in the slice
 		if v == country {
 			return true
 		}
 	}
+	// If the country is not in the slice, return false
 	return false
 }

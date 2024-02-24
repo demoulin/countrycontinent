@@ -1,52 +1,58 @@
 package countrycontinent
 
 import (
+	"strings"
 	"testing"
 )
 
 // TestCountryGetFullName tests the CountryGetFullName function.
 func TestCountryGetFullName(t *testing.T) {
-	// Test cases are represented as a map of country codes to full names.
-	for country, fullname := range map[string]string{
-		"NL": "Netherlands",
-		"US": "United States",
-		"MX": "Mexico",
-		"PE": "Peru",
-		"DM": "Dominica",
-		"NZ": "New Zealand (Aotearoa)",
-		"JP": "Japan",
-		"XX": "",
-	} {
-		// The test function checks that the country code returns the expected full name.
-		if CountryGetFullName(country) != fullname {
-			// If the expected and actual values are different, the test fails.
-			t.Errorf("CountryGetFullName(%s) = %s; want %s", country, CountryGetFullName(country), fullname)
-		}
+	tests := []struct {
+		name     string
+		code     string
+		expected string
+		wantErr  bool
+	}{
+		{name: "Valid code", code: "US", expected: "United States", wantErr: false},
+		{name: "Invalid code", code: "XX", expected: "", wantErr: false},
+		{name: "Empty code", code: "", expected: "", wantErr: false},
+		{name: "Mixed case code", code: "fr", expected: "France", wantErr: false},
+		{name: "Invalid mixed case code", code: "xx", expected: "", wantErr: false},
+		{name: "Invalid mixed case code", code: "Xx", expected: "", wantErr: false},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := CountryGetFullName(tc.code)
+			if got != tc.expected {
+				t.Errorf("CountryGetFullName(%s) got = %v, want %v", tc.code, got, tc.expected)
+			}
+		})
 	}
 }
 
-func TestCountryGetContinent(t *testing.T) {
+func TestCountryGetFullNameContinent(t *testing.T) {
 	// test cases
-	for country, continent := range map[string]string{
-		"NL": "Europe",
-		"US": "North America",
-		"MX": "North America",
-		"PE": "South America",
-		"DM": "Caribbean",
-		"NZ": "Oceania",
-		"JP": "Asia",
-		"XX": "",
+	for country, want := range map[string]string{
+		"NL": "Netherlands, Europe",
+		"US": "United States, North America",
+		"MX": "Mexico, North America",
+		"PE": "Peru, South America",
+		"DM": "Dominica, Caribbean",
+		"NZ": "New Zealand (Aotearoa), Oceania",
+		"JP": "Japan, Asia",
+		"XX": ", ",
 	} {
 		// expected result
-		want := continent
+		wantCountry, wantContinent := strings.Split(want, ", ")[0], strings.Split(want, ", ")[1]
 		// actual result
-		got := CountryGetContinent(country)
+		gotCountry, gotContinent := CountryGetFullNameContinent(country)
 		// compare expected and actual result
-		if got != want {
+		if gotCountry != wantCountry || gotContinent != wantContinent {
 			// report error
-			t.Errorf("CountryGetContinent(%s) = %s; want %s", country, got, want)
+			t.Errorf("CountryGetFullNameContinent(%s) = %s, %s; want %s, %s", country, gotCountry, gotContinent, wantCountry, wantContinent)
 		}
 	}
+
 }
 
 func TestContinentGetCountries(t *testing.T) {
@@ -64,31 +70,32 @@ func TestContinentGetCountries(t *testing.T) {
 
 	// We want to test if the countries are in the right continent
 	for continent, countries := range map[string][]string{
-		"Europe":        {"NL", "DE", "FR", "ES", "IT", "GB"},
-		"North America": {"US", "MX"},
-		"South America": {"PE"},
-		"Caribbean":     {"DM", "CU"},
-		"Oceania":       {"NZ"},
-		"Asia":          {"JP"},
-		"XX":            {},
+		"Europe":          {"NL", "DE", "FR", "ES", "IT", "GB"},
+		"North America":   {"US", "MX"},
+		"Central America": {"BZ", "CR", "SV", "GT", "HN", "ni", "PA"},
+		"South America":   {"PE"},
+		"Caribbean":       {"DM", "CU"},
+		"Oceania":         {"NZ"},
+		"Asia":            {"JP"},
+		"Africa":          {"ZA"},
+		"Antarctica":      {"TF"},
+		"XX":              {},
 	} {
 		for _, country := range countries {
-			if !StringInSlice(country, ContinentGetCountries(continent)) {
+			if !StringInSlice(strings.ToUpper(country), ContinentGetCountries(continent)) {
 				t.Errorf("ContinentGetCountries(%s) = %s; want %s", continent, ContinentGetCountries(continent), countries)
 			}
 		}
 	}
 }
 
-// StringInSlice checks if a string is present in a slice of strings
+// StringInSlice checks if a string is present in a slice of strings, performing a case-insensitive comparison.
 func StringInSlice(country string, s []string) bool {
-	// Iterate through the slice
+	uppercaseCountry := strings.ToUpper(country)
 	for _, v := range s {
-		// Check if the country is in the slice
-		if v == country {
+		if strings.ToUpper(v) == uppercaseCountry {
 			return true
 		}
 	}
-	// If the country is not in the slice, return false
 	return false
 }

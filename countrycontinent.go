@@ -1,12 +1,15 @@
 package countrycontinent
 
+import "strings"
+
+// CountryContinent is a struct that holds the country code, country name and continent
 type CountryContinent struct {
 	CountryCode string
 	CountryName string
 	Continent   string
 }
 
-// CountryContinent is a struct that holds the country code, country name and continent
+// countryContinent is a slice of CountryContinent
 var countryContinent = []CountryContinent{
 	{"AD", "Andorra", "Europe"},
 	{"AE", "United Arab Emirates", "Asia"},
@@ -249,18 +252,28 @@ var countryContinent = []CountryContinent{
 // This function will return an empty string if the country code is not found.
 func CountryGetFullName(countryCode string) string {
 	for _, country := range countryContinent {
-		if country.CountryCode == countryCode {
+		if country.CountryCode == strings.ToUpper(countryCode) {
 			return country.CountryName
 		}
 	}
 	return ""
 }
 
+// CountryGetFullNameContinent returns the full name and continent of the country with the given country code.
+func CountryGetFullNameContinent(countryCode string) (string, string) {
+	for _, country := range countryContinent {
+		if country.CountryCode == strings.ToUpper(countryCode) {
+			return country.CountryName, country.Continent
+		}
+	}
+	return "", ""
+}
+
 // CountryGetContinent returns the continent of a country from its country code (case sensitive)
 // This function will return an empty string if the country code is not found.
 func CountryGetContinent(countryCode string) string {
 	for _, countryContinent := range countryContinent {
-		if countryContinent.CountryCode == countryCode {
+		if countryContinent.CountryCode == strings.ToUpper(countryCode) {
 			return countryContinent.Continent
 		}
 	}

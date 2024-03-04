@@ -1,6 +1,7 @@
 # Country Continent
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/demoulin/countrycontinent)](https://goreportcard.com/report/github.com/demoulin/countrycontinent)
+[![codecov](https://codecov.io/gh/demoulin/countrycontinent/graph/badge.svg?token=MEFFJJBA82)](https://codecov.io/gh/demoulin/countrycontinent)
 [![GoDoc](https://godoc.org/github.com/demoulin/countrycontinent?status.svg)](https://godoc.org/github.com/demoulin/countrycontinent)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/demoulin/countrycontinent/blob/master/LICENSE)
 

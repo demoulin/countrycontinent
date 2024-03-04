@@ -1,12 +1,30 @@
+// Package countrycontinent provides functionality to retrieve information about countries and continents.
+// It allows mapping country codes to country names and continents, as well as retrieving countries by continent.
+//
+// Usage:
+//
+//   - CountryGetFullName(countryCode string) string
+//     Returns the full name of a country given its country code.
+//
+//   - CountryGetFullNameContinent(countryCode string) (string, string)
+//     Returns the full name and continent of a country given its country code.
+//
+//   - CountryGetContinent(countryCode string) string
+//     Returns the continent of a country given its country code.
+//
+//   - ContinentGetCountries(continent string) []string
+//     Returns a list of country codes belonging to a given continent.
 package countrycontinent
 
-import "strings"
+import (
+	"strings"
+)
 
 // CountryContinent is a struct that holds the country code, country name and continent
 type CountryContinent struct {
-	CountryCode string
-	CountryName string
-	Continent   string
+	CountryCode string // ISO 3166-1 alpha-2 country code
+	CountryName string // Full name of the country
+	Continent   string // Continent to which the country belongs
 }
 
 // countryContinent is a slice of CountryContinent
@@ -248,23 +266,30 @@ var countryContinent = []CountryContinent{
 	{"ZW", "Zimbabwe", "Africa"},
 }
 
+var countryMap map[string]CountryContinent
+
+func init() {
+	countryMap = make(map[string]CountryContinent)
+	for _, country := range countryContinent {
+		countryMap[country.CountryCode] = country
+	}
+}
+
 // CountryGetFullName returns the full name of the country with the given country code.
 // This function will return an empty string if the country code is not found.
 func CountryGetFullName(countryCode string) string {
-	for _, country := range countryContinent {
-		if country.CountryCode == strings.ToUpper(countryCode) {
-			return country.CountryName
-		}
+	countryCode = strings.ToUpper(countryCode)
+	if country, ok := countryMap[countryCode]; ok {
+		return country.CountryName
 	}
 	return ""
 }
 
 // CountryGetFullNameContinent returns the full name and continent of the country with the given country code.
 func CountryGetFullNameContinent(countryCode string) (string, string) {
-	for _, country := range countryContinent {
-		if country.CountryCode == strings.ToUpper(countryCode) {
-			return country.CountryName, country.Continent
-		}
+	countryCode = strings.ToUpper(countryCode)
+	if country, ok := countryMap[countryCode]; ok {
+		return country.CountryName, country.Continent
 	}
 	return "", ""
 }
@@ -272,19 +297,18 @@ func CountryGetFullNameContinent(countryCode string) (string, string) {
 // CountryGetContinent returns the continent of a country from its country code (case sensitive)
 // This function will return an empty string if the country code is not found.
 func CountryGetContinent(countryCode string) string {
-	for _, countryContinent := range countryContinent {
-		if countryContinent.CountryCode == strings.ToUpper(countryCode) {
-			return countryContinent.Continent
-		}
+	countryCode = strings.ToUpper(countryCode)
+	if country, ok := countryMap[countryCode]; ok {
+		return country.Continent
 	}
 	return ""
 }
 
 // ContinentGetCountries returns a list of countries in a continent from its continent name (case sensitive)
 func ContinentGetCountries(continent string) (countries []string) {
-	for _, v := range countryContinent {
-		if v.Continent == continent {
-			countries = append(countries, v.CountryCode)
+	for _, country := range countryContinent {
+		if country.Continent == continent {
+			countries = append(countries, country.CountryCode)
 		}
 	}
 	return countries

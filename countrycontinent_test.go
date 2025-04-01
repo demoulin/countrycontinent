@@ -13,16 +13,22 @@ func TestCountryGetFullName(t *testing.T) {
 		code     string
 		expected string
 		wantErr  bool
+		errType  string // "invalid" for InvalidCountryCodeError, "notfound" for CountryNotFoundError
 	}{
-		{name: "Valid code", code: "US", expected: "United States", wantErr: false},
-		{name: "Invalid code", code: "XX", expected: "", wantErr: true},
-		{name: "Empty code", code: "", expected: "", wantErr: true},
-		{name: "Mixed case code", code: "fr", expected: "France", wantErr: false},
-		{name: "Invalid mixed case code", code: "xx", expected: "", wantErr: true},
-		{name: "Invalid mixed case code", code: "Xx", expected: "", wantErr: true},
-		{name: "Andorra", code: "AD", expected: "Andorra", wantErr: false},
-		{name: "South Africa", code: "ZA", expected: "South Africa", wantErr: false},
-		{name: "Zimbabwe", code: "ZW", expected: "Zimbabwe", wantErr: false},
+		{name: "Valid code", code: "US", expected: "United States", wantErr: false, errType: ""},
+		{name: "Invalid code", code: "XX", expected: "", wantErr: true, errType: "notfound"},
+		{name: "Empty code", code: "", expected: "", wantErr: true, errType: "invalid"},
+		{name: "Mixed case code", code: "fr", expected: "France", wantErr: false, errType: ""},
+		{name: "Invalid mixed case code", code: "xx", expected: "", wantErr: true, errType: "notfound"},
+		{name: "Invalid mixed case code", code: "Xx", expected: "", wantErr: true, errType: "notfound"},
+		{name: "Andorra", code: "AD", expected: "Andorra", wantErr: false, errType: ""},
+		{name: "South Africa", code: "ZA", expected: "South Africa", wantErr: false, errType: ""},
+		{name: "Zimbabwe", code: "ZW", expected: "Zimbabwe", wantErr: false, errType: ""},
+		{name: "Too long code", code: "USA", expected: "", wantErr: true, errType: "invalid"},
+		{name: "Too short code", code: "U", expected: "", wantErr: true, errType: "invalid"},
+		{name: "Non-alpha code", code: "U1", expected: "", wantErr: true, errType: "invalid"},
+		{name: "Numeric code", code: "12", expected: "", wantErr: true, errType: "invalid"},
+		{name: "Special chars", code: "U$", expected: "", wantErr: true, errType: "invalid"},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -31,6 +37,20 @@ func TestCountryGetFullName(t *testing.T) {
 				t.Errorf("CountryGetFullName(%s) error = %v, wantErr %v", tc.code, err, tc.wantErr)
 				return
 			}
+			
+			if err != nil && tc.errType != "" {
+				switch tc.errType {
+				case "invalid":
+					if _, ok := err.(*InvalidCountryCodeError); !ok {
+						t.Errorf("CountryGetFullName(%s) expected InvalidCountryCodeError, got %T", tc.code, err)
+					}
+				case "notfound":
+					if _, ok := err.(*CountryNotFoundError); !ok {
+						t.Errorf("CountryGetFullName(%s) expected CountryNotFoundError, got %T", tc.code, err)
+					}
+				}
+			}
+			
 			if got != tc.expected {
 				t.Errorf("CountryGetFullName(%s) got = %v, want %v", tc.code, got, tc.expected)
 			}
@@ -183,4 +203,38 @@ func equalSlices(a, b []string) bool {
 		}
 	}
 	return true
+}
+
+// TestValidateCountryCode tests the ValidateCountryCode function.
+func TestValidateCountryCode(t *testing.T) {
+	tests := []struct {
+		name    string
+		code    string
+		wantErr bool
+	}{
+		{name: "Valid code", code: "US", wantErr: false},
+		{name: "Valid lowercase code", code: "us", wantErr: false},
+		{name: "Valid mixed case code", code: "Us", wantErr: false},
+		{name: "Empty code", code: "", wantErr: true},
+		{name: "Too long code", code: "USA", wantErr: true},
+		{name: "Too short code", code: "U", wantErr: true},
+		{name: "Non-alpha code", code: "U1", wantErr: true},
+		{name: "Numeric code", code: "12", wantErr: true},
+		{name: "Special chars", code: "U$", wantErr: true},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := ValidateCountryCode(tc.code)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("ValidateCountryCode(%s) error = %v, wantErr %v", tc.code, err, tc.wantErr)
+				return
+			}
+			
+			if err != nil {
+				if _, ok := err.(*InvalidCountryCodeError); !ok {
+					t.Errorf("ValidateCountryCode(%s) expected InvalidCountryCodeError, got %T", tc.code, err)
+				}
+			}
+		})
+	}
 }

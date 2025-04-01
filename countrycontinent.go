@@ -18,6 +18,7 @@ package countrycontinent
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 )
 
@@ -35,6 +36,15 @@ type CountryNotFoundError struct {
 
 func (e *CountryNotFoundError) Error() string {
 	return fmt.Sprintf("country code not found: %s", e.CountryCode)
+}
+
+// InvalidCountryCodeError is returned when an invalid country code format is provided.
+type InvalidCountryCodeError struct {
+	CountryCode string
+}
+
+func (e *InvalidCountryCodeError) Error() string {
+	return fmt.Sprintf("invalid country code format: %s (must be a 2-letter ISO 3166-1 code)", e.CountryCode)
 }
 
 // ContinentNotFoundError is returned when a continent is not found.
@@ -284,10 +294,12 @@ var countryContinent = []CountryContinent{
 
 var countryMap map[string]CountryContinent
 var continentMap map[string][]string
+var countryCodePattern *regexp.Regexp
 
 func init() {
 	countryMap = make(map[string]CountryContinent)
 	continentMap = make(map[string][]string)
+	countryCodePattern = regexp.MustCompile(`^[A-Z]{2}$`)
 
 	for _, country := range countryContinent {
 		countryMap[country.CountryCode] = country
@@ -295,8 +307,28 @@ func init() {
 	}
 }
 
+// ValidateCountryCode checks if the provided country code has a valid format.
+// It returns an error if the code is not a 2-letter ISO 3166-1 alpha-2 code.
+func ValidateCountryCode(countryCode string) error {
+	if countryCode == "" {
+		return &InvalidCountryCodeError{CountryCode: countryCode}
+	}
+	
+	countryCode = strings.ToUpper(countryCode)
+	
+	if !countryCodePattern.MatchString(countryCode) {
+		return &InvalidCountryCodeError{CountryCode: countryCode}
+	}
+	
+	return nil
+}
+
 // CountryGetFullName returns the full name of the country with the given country code.
 func CountryGetFullName(countryCode string) (string, error) {
+	if err := ValidateCountryCode(countryCode); err != nil {
+		return "", err
+	}
+
 	countryCode = strings.ToUpper(countryCode)
 	country, ok := countryMap[countryCode]
 	if !ok {
@@ -307,6 +339,10 @@ func CountryGetFullName(countryCode string) (string, error) {
 
 // CountryGetFullNameContinent returns the full name and continent of the country with the given country code.
 func CountryGetFullNameContinent(countryCode string) (string, string, error) {
+	if err := ValidateCountryCode(countryCode); err != nil {
+		return "", "", err
+	}
+
 	countryCode = strings.ToUpper(countryCode)
 	country, ok := countryMap[countryCode]
 	if !ok {
@@ -317,6 +353,10 @@ func CountryGetFullNameContinent(countryCode string) (string, string, error) {
 
 // CountryGetContinent returns the continent of a country from its country code.
 func CountryGetContinent(countryCode string) (string, error) {
+	if err := ValidateCountryCode(countryCode); err != nil {
+		return "", err
+	}
+
 	countryCode = strings.ToUpper(countryCode)
 	country, ok := countryMap[countryCode]
 	if !ok {

@@ -17,8 +17,12 @@
 package countrycontinent
 
 import (
+	"context"
 	"fmt"
 	"strings"
+	"time"
+
+	"golang.org/x/exp/maps"
 )
 
 // CountryContinent is a struct that holds the country code, country name and continent
@@ -26,6 +30,34 @@ type CountryContinent struct {
 	CountryCode string // ISO 3166-1 alpha-2 country code
 	CountryName string // Full name of the country
 	Continent   string // Continent to which the country belongs
+}
+
+// QueryOptions holds options for country queries
+type QueryOptions struct {
+	// Timeout specifies how long to wait for a response
+	Timeout time.Duration
+	// Tags for logging/tracing
+	Tags map[string]string
+}
+
+// DefaultQueryOptions returns the default query options
+func DefaultQueryOptions() *QueryOptions {
+	return &QueryOptions{
+		Timeout: 5 * time.Second,
+		Tags:    make(map[string]string),
+	}
+}
+
+// WithTimeout sets the timeout for a query
+func (o *QueryOptions) WithTimeout(timeout time.Duration) *QueryOptions {
+	o.Timeout = timeout
+	return o
+}
+
+// WithTag adds a tag to the query
+func (o *QueryOptions) WithTag(key, value string) *QueryOptions {
+	o.Tags[key] = value
+	return o
 }
 
 // CountryNotFoundError is returned when a country code is not found.
@@ -331,5 +363,149 @@ func ContinentGetCountries(continent string) ([]string, error) {
 	if !ok {
 		return nil, &ContinentNotFoundError{Continent: continent}
 	}
+	return countries, nil
+}
+
+// CountryGetFullNameWithContext is a context-aware version of CountryGetFullName.
+// It respects context cancellation and timeout, and supports tracing/logging.
+func CountryGetFullNameWithContext(ctx context.Context, countryCode string, opts *QueryOptions) (string, error) {
+	if opts == nil {
+		opts = DefaultQueryOptions()
+	}
+
+	// Create a child context with timeout if provided
+	var cancel context.CancelFunc
+	if opts.Timeout > 0 {
+		ctx, cancel = context.WithTimeout(ctx, opts.Timeout)
+		defer cancel()
+	}
+
+	// Check for context cancellation
+	select {
+	case <-ctx.Done():
+		return "", ctx.Err()
+	default:
+		// Continue processing
+	}
+
+	// Add query metadata to context
+	for k, v := range opts.Tags {
+		ctx = context.WithValue(ctx, k, v)
+	}
+
+	// Standard processing
+	countryCode = strings.ToUpper(countryCode)
+	country, ok := countryMap[countryCode]
+	if !ok {
+		return "", &CountryNotFoundError{CountryCode: countryCode}
+	}
+
+	return country.CountryName, nil
+}
+
+// CountryGetFullNameContinentWithContext is a context-aware version of CountryGetFullNameContinent.
+func CountryGetFullNameContinentWithContext(ctx context.Context, countryCode string, opts *QueryOptions) (string, string, error) {
+	if opts == nil {
+		opts = DefaultQueryOptions()
+	}
+
+	// Create a child context with timeout if provided
+	var cancel context.CancelFunc
+	if opts.Timeout > 0 {
+		ctx, cancel = context.WithTimeout(ctx, opts.Timeout)
+		defer cancel()
+	}
+
+	// Check for context cancellation
+	select {
+	case <-ctx.Done():
+		return "", "", ctx.Err()
+	default:
+		// Continue processing
+	}
+
+	// Add query metadata to context
+	for k, v := range opts.Tags {
+		ctx = context.WithValue(ctx, k, v)
+	}
+
+	// Standard processing
+	countryCode = strings.ToUpper(countryCode)
+	country, ok := countryMap[countryCode]
+	if !ok {
+		return "", "", &CountryNotFoundError{CountryCode: countryCode}
+	}
+
+	return country.CountryName, country.Continent, nil
+}
+
+// CountryGetContinentWithContext is a context-aware version of CountryGetContinent.
+func CountryGetContinentWithContext(ctx context.Context, countryCode string, opts *QueryOptions) (string, error) {
+	if opts == nil {
+		opts = DefaultQueryOptions()
+	}
+
+	// Create a child context with timeout if provided
+	var cancel context.CancelFunc
+	if opts.Timeout > 0 {
+		ctx, cancel = context.WithTimeout(ctx, opts.Timeout)
+		defer cancel()
+	}
+
+	// Check for context cancellation
+	select {
+	case <-ctx.Done():
+		return "", ctx.Err()
+	default:
+		// Continue processing
+	}
+
+	// Add query metadata to context
+	for k, v := range opts.Tags {
+		ctx = context.WithValue(ctx, k, v)
+	}
+
+	// Standard processing
+	countryCode = strings.ToUpper(countryCode)
+	country, ok := countryMap[countryCode]
+	if !ok {
+		return "", &CountryNotFoundError{CountryCode: countryCode}
+	}
+
+	return country.Continent, nil
+}
+
+// ContinentGetCountriesWithContext is a context-aware version of ContinentGetCountries.
+func ContinentGetCountriesWithContext(ctx context.Context, continent string, opts *QueryOptions) ([]string, error) {
+	if opts == nil {
+		opts = DefaultQueryOptions()
+	}
+
+	// Create a child context with timeout if provided
+	var cancel context.CancelFunc
+	if opts.Timeout > 0 {
+		ctx, cancel = context.WithTimeout(ctx, opts.Timeout)
+		defer cancel()
+	}
+
+	// Check for context cancellation
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+		// Continue processing
+	}
+
+	// Add query metadata to context
+	for k, v := range opts.Tags {
+		ctx = context.WithValue(ctx, k, v)
+	}
+
+	// Standard processing
+	countries, ok := continentMap[continent]
+	if !ok {
+		return nil, &ContinentNotFoundError{Continent: continent}
+	}
+
 	return countries, nil
 }

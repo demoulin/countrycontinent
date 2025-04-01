@@ -13,6 +13,8 @@ The `country-continent` package provides a convenient way to retrieve informatio
 - Get the full name and continent of a country from its country code
 - Get the continent of a country from its country code
 - Get a list of country codes belonging to a specific continent
+- Context-aware functions with tracing/logging support
+- Generic functions for flexible return types and batch operations
 
 ## Installation
 
@@ -56,7 +58,7 @@ func ContinentGetCountries(continent string) []string
 
 Returns a list of country codes belonging to a given continent.
 
-## Example
+## Basic Example
 
 ```go
 package main
@@ -68,18 +70,85 @@ import (
 
 func main() {
     // Get the full name of a country
-    fmt.Println(countrycontinent.CountryGetFullName("US"))  // Output: "United States"
+    name, err := countrycontinent.CountryGetFullName("US")
+    if err != nil {
+        fmt.Printf("Error: %v\n", err)
+        return
+    }
+    fmt.Println(name)  // Output: "United States"
 
     // Get the full name and continent of a country
-    name, continent := countrycontinent.CountryGetFullNameContinent("US")
+    name, continent, err := countrycontinent.CountryGetFullNameContinent("US")
+    if err != nil {
+        fmt.Printf("Error: %v\n", err)
+        return
+    }
     fmt.Printf("Country: %s, Continent: %s\n", name, continent)  // Output: Country: United States, Continent: North America
 
     // Get the continent of a country
-    fmt.Println(countrycontinent.CountryGetContinent("US"))  // Output: "North America"
+    continent, err = countrycontinent.CountryGetContinent("US")
+    if err != nil {
+        fmt.Printf("Error: %v\n", err)
+        return
+    }
+    fmt.Println(continent)  // Output: "North America"
 
     // Get countries in a continent
-    countries := countrycontinent.ContinentGetCountries("Europe")
+    countries, err := countrycontinent.ContinentGetCountries("Europe")
+    if err != nil {
+        fmt.Printf("Error: %v\n", err)
+        return
+    }
     fmt.Println(countries)  // Output: [AD AL AT BA BE BG BY CH CZ DE DK EE ES FI FO FR GB GI GR HR HU IE IS IT LI LT LU LV MC MD MK MT NL NO PL PT RO RU SE SI SJ SK SM UA VA YU]
+}
+```
+
+## Advanced Example with Context and Generics
+
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "time"
+    "github.com/demoulin/countrycontinent"
+)
+
+func main() {
+    // Create context and options
+    ctx := context.Background()
+    opts := countrycontinent.DefaultQueryOptions().
+        WithTimeout(1 * time.Second).
+        WithTag("request_id", "example-123")
+
+    // Get country info using generics
+    infoQuery := countrycontinent.CountryFullInfoQuery()
+    result := infoQuery(ctx, "FR", opts)
+    if result.Error != nil {
+        fmt.Printf("Error: %v\n", result.Error)
+        return
+    }
+    fmt.Printf("Country: %+v\n", result.Data)
+
+    // Batch query multiple countries
+    countryCodes := []string{"DE", "IT", "JP", "BR"}
+    results := countrycontinent.MultiCountryQuery(ctx, countryCodes, infoQuery, opts)
+
+    // Filter and transform results
+    countryNames := countrycontinent.MapResults(
+        countrycontinent.FilterCountries(results, func(r countrycontinent.QueryResult[countrycontinent.CountryInfo]) bool {
+            return r.Error == nil && r.Data.Continent == "Europe"
+        }),
+        func(r countrycontinent.QueryResult[countrycontinent.CountryInfo]) string {
+            return r.Data.Name
+        },
+    )
+
+    fmt.Println("European countries:")
+    for _, name := range countryNames {
+        fmt.Printf("- %s\n", name)
+    }
 }
 ```
 

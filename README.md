@@ -19,7 +19,7 @@ The `country-continent` package provides a convenient way to retrieve informatio
 To install the package, use the following command:
 
 ```shell
-go get github.com/demoulin/countrycontinent@v1.5.0
+go get github.com/demoulin/countrycontinent@v1.5.1
 ```
 
 ## Usage

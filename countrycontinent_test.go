@@ -42,6 +42,38 @@ func TestCountryGetFullName(t *testing.T) {
 	}
 }
 
+func TestErrorMessages(t *testing.T) {
+	tests := []struct {
+		name     string
+		err      error
+		expected string
+	}{
+		{
+			name:     "InvalidCountryCodeError",
+			err:      &InvalidCountryCodeError{CountryCode: "XX"},
+			expected: "invalid country code format: XX",
+		},
+		{
+			name:     "CountryNotFoundError",
+			err:      &CountryNotFoundError{CountryCode: "YY"},
+			expected: "country code not found: YY",
+		},
+		{
+			name:     "ContinentNotFoundError",
+			err:      &ContinentNotFoundError{Continent: "Mars"},
+			expected: "continent not found: Mars",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.err.Error() != tc.expected {
+				t.Errorf("Error() got %q, want %q", tc.err.Error(), tc.expected)
+			}
+		})
+	}
+}
+
 func TestCountryGetFullNameContinent(t *testing.T) {
 	tests := []struct {
 		name          string

@@ -36,7 +36,16 @@ jobs:
       - name: Test with Coverage
         run: |
           go test -v -coverprofile=coverage.out ./...
-          go tool cover -func=coverage.out
+          go tool cover -func=coverage.out > coverage-summary.txt
+
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: go-test-results
+          path: |
+            coverage.out
+            coverage-summary.txt
+        if: always() # Ensure artifacts are uploaded even if tests fail, to inspect results
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4

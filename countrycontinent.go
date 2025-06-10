@@ -21,6 +21,8 @@ import (
 	"regexp"
 )
 
+var isoCountryCodeRegex = regexp.MustCompile("^[A-Z]{2}$")
+
 // CountryContinent is a struct that holds the country code, country name and continent
 type CountryContinent struct {
 	CountryCode string // ISO 3166-1 alpha-2 country code
@@ -306,9 +308,7 @@ func init() {
 
 // isValidCountryCode checks if the country code is a 2-letter uppercase string.
 func isValidCountryCode(code string) bool {
-	// Regex for ISO 3166-1 Alpha-2: exactly two uppercase letters
-	r := regexp.MustCompile("^[A-Z]{2}$")
-	return r.MatchString(code)
+	return isoCountryCodeRegex.MatchString(code)
 }
 
 // CountryGetFullName returns the full name of the country with the given country code.

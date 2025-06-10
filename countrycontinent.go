@@ -18,7 +18,7 @@ package countrycontinent
 
 import (
 	"fmt"
-	"strings"
+	"regexp"
 )
 
 // CountryContinent is a struct that holds the country code, country name and continent
@@ -44,6 +44,15 @@ type ContinentNotFoundError struct {
 
 func (e *ContinentNotFoundError) Error() string {
 	return fmt.Sprintf("continent not found: %s", e.Continent)
+}
+
+// InvalidCountryCodeError is returned when a country code is not in the valid format.
+type InvalidCountryCodeError struct {
+	CountryCode string
+}
+
+func (e *InvalidCountryCodeError) Error() string {
+	return fmt.Sprintf("invalid country code format: %s", e.CountryCode)
 }
 
 // countryContinent is a slice of CountryContinent
@@ -295,9 +304,18 @@ func init() {
 	}
 }
 
+// isValidCountryCode checks if the country code is a 2-letter uppercase string.
+func isValidCountryCode(code string) bool {
+	// Regex for ISO 3166-1 Alpha-2: exactly two uppercase letters
+	r := regexp.MustCompile("^[A-Z]{2}$")
+	return r.MatchString(code)
+}
+
 // CountryGetFullName returns the full name of the country with the given country code.
 func CountryGetFullName(countryCode string) (string, error) {
-	countryCode = strings.ToUpper(countryCode)
+	if !isValidCountryCode(countryCode) {
+		return "", &InvalidCountryCodeError{CountryCode: countryCode}
+	}
 	country, ok := countryMap[countryCode]
 	if !ok {
 		return "", &CountryNotFoundError{CountryCode: countryCode}
@@ -307,7 +325,9 @@ func CountryGetFullName(countryCode string) (string, error) {
 
 // CountryGetFullNameContinent returns the full name and continent of the country with the given country code.
 func CountryGetFullNameContinent(countryCode string) (string, string, error) {
-	countryCode = strings.ToUpper(countryCode)
+	if !isValidCountryCode(countryCode) {
+		return "", "", &InvalidCountryCodeError{CountryCode: countryCode}
+	}
 	country, ok := countryMap[countryCode]
 	if !ok {
 		return "", "", &CountryNotFoundError{CountryCode: countryCode}
@@ -317,7 +337,9 @@ func CountryGetFullNameContinent(countryCode string) (string, string, error) {
 
 // CountryGetContinent returns the continent of a country from its country code.
 func CountryGetContinent(countryCode string) (string, error) {
-	countryCode = strings.ToUpper(countryCode)
+	if !isValidCountryCode(countryCode) {
+		return "", &InvalidCountryCodeError{CountryCode: countryCode}
+	}
 	country, ok := countryMap[countryCode]
 	if !ok {
 		return "", &CountryNotFoundError{CountryCode: countryCode}

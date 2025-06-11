@@ -30,13 +30,13 @@ jobs:
 
       - name: Check code formatting
         run: |
-          # The `if` condition ensures this doesn't fail the build, just warns.
-          # Remove the `if` and `exit 1` if you want to enforce formatting strictly.
-          if [ -n "$(gofmt -l .)" ]; then
-            echo "Go code is not formatted:"
-            gofmt -l .
+          $formatted_files = gofmt -l .
+          if ($formatted_files) {
+            Write-Host "Go code is not formatted:"
+            Write-Host $formatted_files
             exit 1
-          fi
+          }
+        shell: pwsh # Ensure PowerShell is used to execute this script
 
       - name: Lint code
         # Use the official action for golangci-lint

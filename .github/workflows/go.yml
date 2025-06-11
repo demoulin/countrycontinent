@@ -31,11 +31,14 @@ jobs:
       - name: Verify go.sum
         run: |
           go mod tidy
-          if ! git diff --quiet go.mod go.sum; then
-            echo 'go.mod or go.sum is not tidy or committed. Please run "go mod tidy" and commit the changes.'
+          # Check if go.mod or go.sum are uncommitted or modified
+          if [ -n "$(git status --porcelain go.mod go.sum)" ]; then
+            echo "go.mod or go.sum is not tidy or has uncommitted changes after 'go mod tidy'."
+            echo "Please run 'go mod tidy' locally and commit all changes to go.mod and go.sum."
             git status --porcelain go.mod go.sum
             exit 1
           fi
+          echo "go.mod and go.sum are tidy and up to date."
         shell: bash
 
       - name: Format Go code

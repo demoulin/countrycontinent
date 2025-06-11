@@ -12,7 +12,7 @@ jobs:
     # Use a matrix to test on multiple Go versions and operating systems
     strategy:
       matrix:
-        go-version: ['1.21.x', '1.22.x'] # Use stable versions, not pre-release
+        go-version: ['1.23.x']
         os: [ubuntu-latest, macos-latest, windows-latest]
 
     runs-on: ${{ matrix.os }}
@@ -28,19 +28,24 @@ jobs:
           # Enable caching for Go modules and build cache
           cache: true
 
+      - name: Verify go.sum
+        run: |
+          go mod tidy
+          git diff --quiet go.mod go.sum || (echo 'go.sum is not tidy or committed. Please run "go mod tidy" and commit the changes.'; exit 1)
+        shell: bash
+
       - name: Format Go code
         run: gofmt -w .
         shell: bash
 
       - name: Check code formatting
         run: |
-          $formatted_files = gofmt -l .
-          if ($formatted_files) {
-            Write-Host "Go code is not formatted:"
-            Write-Host $formatted_files
+          if [ -n "$(gofmt -l .)" ]; then
+            echo "Go code is not formatted:"
+            gofmt -l .
             exit 1
-          }
-        shell: pwsh # Ensure PowerShell is used to execute this script
+          fi
+        shell: bash
 
       - name: Lint code
         # Use the official action for golangci-lint

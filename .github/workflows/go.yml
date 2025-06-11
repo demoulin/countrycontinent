@@ -1,7 +1,5 @@
-# This workflow will build and test a Go project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
-
-name: Go
+# .github/workflows/go.yml
+name: Go CI
 
 on:
   push:
@@ -10,45 +8,78 @@ on:
     branches: ["main"]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  test:
+    # Use a matrix to test on multiple Go versions and operating systems
+    strategy:
+      matrix:
+        go-version: ['1.21.x', '1.22.x'] # Use stable versions, not pre-release
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    runs-on: ${{ matrix.os }}
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.23" # Use a version that satisfies the linter's requirements
-          check-latest: true # check if a newer version is available
+          go-version: ${{ matrix.go-version }}
+          # Enable caching for Go modules and build cache
+          cache: true
 
-      - name: Install Staticcheck
-        run: go install honnef.co/go/tools/cmd/staticcheck@latest
+      - name: Check code formatting
+        run: |
+          # The `if` condition ensures this doesn't fail the build, just warns.
+          # Remove the `if` and `exit 1` if you want to enforce formatting strictly.
+          if [ -n "$(gofmt -l .)" ]; then
+            echo "Go code is not formatted:"
+            gofmt -l .
+            exit 1
+          fi
 
-      - name: Lint
-        run: staticcheck ./...
+      - name: Lint code
+        # Use the official action for golangci-lint
+        # It's faster and handles caching automatically
+        uses: golangci/golangci-lint-action@v6
+        with:
+          # Optional: version of golangci-lint to use in form of v1.2.3 or `latest` to use the latest version
+          version: v1.58
+
+          # Optional: show only new issues if it's a pull request
+          only-new-issues: true
+
+      - name: Scan for vulnerabilities
+        run: go install golang.org/x/vuln/cmd/govulncheck@latest && govulncheck ./...
 
       - name: Build
         run: go build -v ./...
 
-      - name: Test
-        run: go test -v ./...
-
       - name: Test with Coverage
         run: |
-          go test -v -coverprofile=coverage.out ./...
+          go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
           go tool cover -func=coverage.out > coverage-summary.txt
-
-      - name: Upload test artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: go-test-results
-          path: |
-            coverage.out
-            coverage-summary.txt
-        if: always() # Ensure artifacts are uploaded even if tests fail, to inspect results
+        # The -race flag is a powerful tool to detect race conditions in your tests.
+        # -covermode=atomic is required for -race flag with coverage.
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4
+        # Don't run this on every matrix job, only one.
+        # We'll run it on the latest Go version on Ubuntu.
+        if: matrix.os == 'ubuntu-latest' && matrix.go-version == '1.22.x'
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          slug: demoulin/countrycontinent
+          slug: demoulin/countrycontinent # Optional: The action can often infer this
+          files: ./coverage.out
+          # The `flags` option helps Codecov distinguish reports from different OS/Go versions
+          flags: ${{ matrix.os }},go${{ matrix.go-version }}
+
+      - name: Upload test artifacts
+        # This can be useful for debugging a specific OS/Go version failure
+        if: failure() # Only upload artifacts if the job fails
+        uses: actions/upload-artifact@v4
+        with:
+          name: go-test-results-${{ matrix.os }}-go${{ matrix.go-version }}
+          path: |
+            coverage.out
+            coverage-summary.txt

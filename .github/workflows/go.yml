@@ -12,7 +12,7 @@ jobs:
     # Use a matrix to test on multiple Go versions and operating systems
     strategy:
       matrix:
-        go-version: ['1.23.x']
+        go-version: ['1.23.10']
         os: [ubuntu-latest, macos-latest, windows-latest]
 
     runs-on: ${{ matrix.os }}

@@ -28,6 +28,10 @@ jobs:
           # Enable caching for Go modules and build cache
           cache: true
 
+      - name: Format Go code
+        run: gofmt -w .
+        shell: bash
+
       - name: Check code formatting
         run: |
           $formatted_files = gofmt -l .
